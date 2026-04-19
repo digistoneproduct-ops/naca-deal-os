@@ -1,69 +1,716 @@
 <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NACA Deal OS v3 — Darcell Edwards #2722107</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #080808; --surface: #0f0f0f; --card: #161616;
+  --border: #1e1e1e; --border2: #2a2a2a;
+  --accent: #b8ff3c; --accent-bg: rgba(184,255,60,.08); --accent-br: rgba(184,255,60,.3);
+  --text: #efefef; --muted: #555; --muted2: #888;
+  --danger: #ff4d4d; --danger-bg: rgba(255,77,77,.1);
+  --warn: #ffaa00; --warn-bg: rgba(255,170,0,.1);
+  --mono: 'IBM Plex Mono',monospace; --sans: 'Syne',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);display:flex;flex-direction:column;}
 
-<head> 
-   <link href="index.html-interests-hobbies.css" rel="stylesheet" type="text/css">
-   <link href="style.css" rel ="stylesheet" type="text/css">
+/* NAV */
+nav{display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:52px;flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);z-index:10;}
+.brand{font-family:var(--sans);font-weight:800;font-size:13px;letter-spacing:.04em;color:var(--accent);}
+.brand em{color:var(--muted2);font-style:normal;font-weight:400;}
+.tabs{display:flex;gap:2px;}
+.tab-btn{padding:5px 14px;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;border:1px solid transparent;border-radius:4px;cursor:pointer;background:transparent;color:var(--muted2);transition:all .15s;}
+.tab-btn:hover{color:var(--text);border-color:var(--border2);}
+.tab-btn.active{color:var(--accent);border-color:var(--accent-br);background:var(--accent-bg);}
+.score-area{display:flex;align-items:center;gap:12px;}
+.score-tag{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:right;}
+.score-verdict{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;text-align:right;margin-top:1px;}
+.score-num{font-family:var(--sans);font-size:26px;font-weight:800;color:var(--accent);min-width:44px;text-align:right;line-height:1;}
+
+/* PAGES */
+.page{display:none;flex:1;overflow:hidden;}
+.page.active{display:flex;}
+
+/* SHARED */
+.panel-lbl{font-size:9px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:16px;}
+.fl{display:block;font-size:9px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.fg{margin-bottom:13px;}
+input[type=text],input[type=number],select{width:100%;background:var(--card);border:1px solid var(--border2);border-radius:5px;padding:9px 11px;font-family:var(--mono);font-size:12px;color:var(--text);outline:none;transition:border-color .15s;-moz-appearance:textfield;}
+input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;}
+input:focus,select:focus{border-color:var(--accent);}
+input::placeholder{color:var(--muted);}
+select option{background:var(--card);}
+.badge{display:inline-block;padding:3px 10px;border-radius:100px;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;}
+.b-green{background:var(--accent-bg);color:var(--accent);border:1px solid var(--accent-br);}
+.b-warn{background:var(--warn-bg);color:var(--warn);border:1px solid rgba(255,170,0,.3);}
+.b-red{background:var(--danger-bg);color:var(--danger);border:1px solid rgba(255,77,77,.3);}
+.c-green{color:var(--accent);}
+.c-red{color:var(--danger);}
+.c-warn{color:var(--warn);}
+.sec-lbl{font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* ── TAB 1 INTAKE ── */
+.intake-wrap{display:flex;width:100%;overflow:hidden;}
+.intake-form{width:340px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:20px;overflow-y:auto;}
+.intake-results{flex:1;padding:20px;overflow-y:auto;}
+.piti-live{background:var(--card);border:1px solid var(--border2);border-radius:6px;padding:12px;margin-top:7px;display:none;}
+.pl-row{display:flex;justify-content:space-between;font-size:11px;padding:2px 0;color:var(--muted2);}
+.pl-sep{border-top:1px solid var(--border);margin-top:6px;padding-top:7px;color:var(--text);font-weight:500;}
+.btn-run{width:100%;padding:13px;background:var(--accent);color:#000;font-family:var(--sans);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border:none;border-radius:6px;cursor:pointer;margin-top:6px;transition:opacity .15s;}
+.btn-run:hover{opacity:.85;}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;text-align:center;color:var(--muted);gap:12px;}
+.empty-icon{font-size:36px;opacity:.4;}
+.empty-txt{font-size:12px;line-height:1.7;}
+.check-item{display:flex;align-items:flex-start;gap:10px;padding:10px 13px;border-radius:7px;margin-bottom:6px;font-size:11px;line-height:1.5;}
+.ci-pass{background:var(--accent-bg);border:1px solid var(--accent-br);}
+.ci-fail{background:var(--danger-bg);border:1px solid rgba(255,77,77,.25);}
+.ci-warn{background:var(--warn-bg);border:1px solid rgba(255,170,0,.25);}
+.ci-icon{flex-shrink:0;font-size:13px;margin-top:1px;}
+.ci-body strong{display:block;font-weight:600;margin-bottom:2px;}
+.ci-body span{color:var(--muted2);font-size:10px;}
+.result-hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
+.result-addr{font-family:var(--sans);font-size:16px;font-weight:700;}
+.result-sub{font-size:10px;color:var(--muted2);margin-top:3px;}
+.piti-hero{background:var(--card);border:1px solid var(--border2);border-radius:8px;padding:17px;margin:14px 0;}
+.ph-title{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:13px;}
+.ph-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;}
+.ph-lbl{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;}
+.ph-val{font-family:var(--sans);font-size:15px;font-weight:700;}
+.eff-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;margin-bottom:10px;}
+.ebar-wrap{background:var(--border2);border-radius:100px;overflow:hidden;margin-bottom:5px;}
+.ebar-fill{height:100%;border-radius:100px;transition:width .4s,background .4s;}
+.ebar-lbls{display:flex;justify-content:space-between;font-size:9px;color:var(--muted);}
+.chart-card{background:var(--card);border:1px solid var(--border2);border-radius:8px;padding:17px;margin-bottom:13px;}
+.chart-lbl{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:13px;}
+.ffiec{background:var(--card);border:1px solid var(--border2);border-radius:8px;padding:15px;margin-top:13px;}
+.fs{display:flex;gap:10px;margin-bottom:9px;font-size:11px;line-height:1.55;align-items:flex-start;}
+.fs-num{width:18px;height:18px;border-radius:50%;background:var(--accent-bg);color:var(--accent);font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.fs-txt{color:var(--muted2);}
+.fs-txt a{color:var(--accent);text-decoration:none;}
+
+/* ── TAB 2 ANALYZER ── */
+.analyzer-wrap{display:flex;width:100%;overflow:hidden;}
+.az-left{width:235px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:15px;overflow-y:auto;}
+.az-center{flex:1;padding:17px;overflow-y:auto;}
+.az-right{width:215px;flex-shrink:0;background:var(--surface);border-left:1px solid var(--border);padding:15px;overflow-y:auto;}
+.az-sec{margin-bottom:18px;}
+.ir{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.ir-lbl{font-size:11px;color:var(--muted2);}
+.ir input,.ir select{width:105px;text-align:right;background:var(--card);border:1px solid var(--border2);border-radius:4px;padding:5px 8px;font-family:var(--mono);font-size:11px;color:var(--text);outline:none;}
+.ir select{text-align:left;}
+.ir input:focus,.ir select:focus{border-color:var(--accent);}
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:14px;}
+.kpi{background:var(--card);border:1px solid var(--border2);border-radius:7px;padding:11px;}
+.kpi-l{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.kpi-v{font-family:var(--sans);font-size:17px;font-weight:700;}
+.kpi-s{font-size:9px;color:var(--muted);margin-top:3px;}
+.metric-row{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:13px;}
+.metric{background:var(--card);border:1px solid var(--border2);border-radius:7px;padding:13px;text-align:center;}
+.metric-l{font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:7px;}
+.metric-v{font-family:var(--sans);font-size:22px;font-weight:800;margin-bottom:3px;}
+.metric-bm{font-size:9px;color:var(--muted);}
+.comp-tbl{width:100%;border-collapse:collapse;font-size:11px;}
+.comp-tbl th{text-align:left;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:7px 9px;border-bottom:1px solid var(--border);}
+.comp-tbl td{padding:6px 9px;border-bottom:1px solid var(--border);}
+.comp-tbl td input{background:transparent;border:none;font-family:var(--mono);font-size:11px;color:var(--text);outline:none;width:100%;}
+.comp-tbl td input::placeholder{color:var(--muted);}
+.comp-tbl tr:hover td{background:var(--card);}
+.flags-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:13px;}
+.flag{display:flex;align-items:center;gap:7px;padding:8px 10px;border-radius:6px;font-size:10px;}
+.fg-pass{background:var(--accent-bg);}
+.fg-warn{background:var(--warn-bg);}
+.fg-fail{background:var(--danger-bg);}
+.bd-sec{margin-bottom:16px;}
+.bd-title{font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border);}
+.bd-row{display:flex;justify-content:space-between;padding:4px 0;font-size:11px;}
+.bd-lbl{color:var(--muted2);}
+.bd-val{font-weight:500;}
+.bd-total{display:flex;justify-content:space-between;padding:7px 0 3px;font-size:12px;font-weight:600;border-top:1px solid var(--border);margin-top:3px;}
+.btn-sm{width:100%;padding:8px;background:var(--accent-bg);color:var(--accent);font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.08em;border:1px solid var(--accent-br);border-radius:5px;cursor:pointer;margin-top:4px;transition:background .15s;}
+.btn-sm:hover{background:rgba(184,255,60,.15);}
+
+/* ── TAB 3 MATRIX ── */
+.matrix-wrap{flex:1;padding:26px 30px;overflow-y:auto;}
+.mx-h1{font-family:var(--sans);font-size:22px;font-weight:800;margin-bottom:4px;}
+.mx-sub{font-size:11px;color:var(--muted2);margin-bottom:24px;}
+.mx-tbl{width:100%;border-collapse:collapse;margin-bottom:12px;}
+.mx-tbl th{text-align:left;font-size:8px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:11px 14px;border-bottom:1px solid var(--border);}
+.mx-tbl td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:12px;}
+.mx-tbl tr.opt td{background:var(--accent-bg);}
+.mx-tbl tr.opt td:first-child{border-left:3px solid var(--accent);padding-left:11px;}
+.mx-tbl tr:hover td{background:var(--card);}
+.mx-tbl tr.opt:hover td{background:rgba(184,255,60,.12);}
+.insight-box{background:var(--accent-bg);border:1px solid var(--accent-br);border-radius:8px;padding:13px 17px;margin-bottom:32px;font-size:11px;line-height:1.7;color:var(--muted2);}
+.insight-box strong{color:var(--accent);}
+.sec-title{font-family:var(--sans);font-size:16px;font-weight:700;margin-bottom:4px;margin-top:28px;}
+.sec-desc{font-size:11px;color:var(--muted2);margin-bottom:14px;}
+.bd-tbl{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.bd-tbl th{text-align:left;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:10px 13px;border-bottom:1px solid var(--border);}
+.bd-tbl td{padding:11px 13px;border-bottom:1px solid var(--border);font-size:12px;}
+.bd-tbl tr:last-child td{border-bottom:none;}
+.bd-tbl tr:hover td{background:var(--card);}
+.adu-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px;}
+.adu-card{background:var(--card);border:1px solid var(--border2);border-radius:8px;padding:14px;}
+.adu-tag{font-size:8px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px;}
+.adu-name{font-family:var(--sans);font-weight:700;font-size:13px;margin-bottom:5px;}
+.adu-cost{font-family:var(--sans);font-size:19px;font-weight:800;margin-bottom:5px;}
+.adu-note{font-size:10px;color:var(--muted2);line-height:1.55;}
+.adu-note a{color:var(--accent);text-decoration:none;}
+</style>
 </head>
-
-<a href="contact.html"> Contact </a>
-
-<a href="about.html">About</a>
-
 <body>
-    <section class ="fwh-slide">
-        <h1> About Darcell Edwards </h1>
-        <img src= "https://media-exp1.licdn.com/dms/image/C5603AQFk7P1s7ayYQg/profile-displayphoto-shrink_800_800/0/1640717632836?e=1658966400&v=beta&t=h_gNPCVrn5YVqPAiqf2lwOPDJ6R7zPLlvkCAgNujnVY" alt="Darcell" style="width:400px;height 400px" >
-       
 
-    </section>
+<nav>
+  <div class="brand">NACA DEAL OS <em>v3 · #2722107</em></div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('intake',this)">⬛ Intake</button>
+    <button class="tab-btn" onclick="showTab('analyzer',this)">📊 Analyzer</button>
+    <button class="tab-btn" onclick="showTab('matrix',this)">📋 Unit Matrix</button>
+  </div>
+  <div class="score-area">
+    <div>
+      <div class="score-tag">Deal Score</div>
+      <div class="score-verdict" id="score-verdict" style="color:var(--muted)">—</div>
+    </div>
+    <div class="score-num" id="score-num">—</div>
+  </div>
+</nav>
+
+<!-- TAB 1: INTAKE -->
+<div class="page active" id="page-intake">
+<div class="intake-wrap">
+  <div class="intake-form">
+    <div class="panel-lbl">Property Quick-Check</div>
+    <div class="fg"><label class="fl">Property Address</label><input type="text" id="i-address" placeholder="123 Main St, Watts CA 90001"></div>
+    <div class="fg">
+      <label class="fl">Offer Price ($)</label>
+      <input type="number" id="i-price" placeholder="490000" oninput="onPriceChange()">
+      <div class="piti-live" id="piti-live">
+        <div class="pl-row"><span>P&amp;I</span><span id="pl-pi">—</span></div>
+        <div class="pl-row"><span>Tax (1.25%)</span><span id="pl-tax">—</span></div>
+        <div class="pl-row"><span>Insurance</span><span>$300</span></div>
+        <div class="pl-row pl-sep"><span>Full PITI</span><span id="pl-piti">—</span></div>
+        <div class="pl-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)"><span>Rental Credit (<span id="pl-units">?</span> units)</span><span class="c-green" id="pl-credit">—</span></div>
+        <div class="pl-row pl-sep"><span>Effective Payment</span><span id="pl-eff">—</span></div>
+      </div>
+    </div>
+    <div class="fg"><label class="fl">Lot Size (sqft)</label><input type="number" id="i-lot" placeholder="6000"></div>
+    <div class="fg">
+      <label class="fl">Zoning</label>
+      <select id="i-zoning">
+        <option value="">Select zoning…</option>
+        <option value="R1">R1 — Single Family (ADU allowed)</option>
+        <option value="R2">R2 — Two-Family (ADU allowed)</option>
+        <option value="RD">RD — Residential Duplex</option>
+        <option value="Unknown">Unknown — Must verify</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label class="fl">Property Type</label>
+      <select id="i-type" onchange="onPriceChange()">
+        <option value="">Select type…</option>
+        <option value="sfr">SFR — 0 rental units</option>
+        <option value="sfr-adu">SFR + ADU — 1 rental unit</option>
+        <option value="duplex">Duplex — 1 rental unit</option>
+        <option value="sfr-adu-jadu">SFR + ADU + JADU — 2 rental units</option>
+        <option value="triplex">Triplex — 2 rental units</option>
+        <option value="fourplex">Fourplex — 3 rental units</option>
+      </select>
+    </div>
+    <div class="fg"><label class="fl">Census Tract % of MSA Median</label><input type="number" id="i-tract" placeholder="e.g. 72 for 72%"></div>
+    <button class="btn-run" onclick="runCheck()">▶ Run Property Check</button>
+  </div>
+
+  <div class="intake-results">
+    <div class="empty" id="i-empty">
+      <div class="empty-icon">🔍</div>
+      <div class="empty-txt">Fill in the form and hit<br><strong style="color:var(--text)">Run Property Check</strong><br>to see if this deal passes your criteria.</div>
+    </div>
+    <div id="i-results" style="display:none">
+      <div class="result-hdr">
+        <div><div class="result-addr" id="r-addr">—</div><div class="result-sub" id="r-sub">—</div></div>
+        <div id="r-badge"></div>
+      </div>
+      <div id="r-checks"></div>
+      <div class="piti-hero">
+        <div class="ph-title">PITI Breakdown at Offer Price</div>
+        <div class="ph-grid">
+          <div><div class="ph-lbl">P&amp;I</div><div class="ph-val" id="r-pi">—</div></div>
+          <div><div class="ph-lbl">Tax</div><div class="ph-val" id="r-tax">—</div></div>
+          <div><div class="ph-lbl">Insurance</div><div class="ph-val">$300</div></div>
+          <div><div class="ph-lbl">Full PITI</div><div class="ph-val" id="r-piti">—</div></div>
+        </div>
+        <div class="eff-row" style="font-size:11px;font-weight:400;margin-bottom:6px;">
+          <span style="color:var(--muted2)">Rental Credit (<span id="r-cr-units">—</span>)</span>
+          <span class="c-green" id="r-cr-val">—</span>
+        </div>
+        <div class="eff-row"><span>Effective Payment</span><span id="r-eff">—</span></div>
+        <div style="font-size:9px;color:var(--muted);margin-bottom:5px;letter-spacing:.1em;text-transform:uppercase">Cap used: <span id="r-cap-pct">—</span></div>
+        <div class="ebar-wrap" style="height:8px"><div class="ebar-fill" id="r-ebar" style="width:0%"></div></div>
+        <div class="ebar-lbls" style="margin-top:5px"><span>$0</span><span>CAP $1,862</span><span>MAX $4,112</span></div>
+      </div>
+      <div class="chart-card"><div class="chart-lbl">Purchasing Power by Property Type</div><canvas id="powerChart" height="155"></canvas></div>
+      <div class="ffiec">
+        <div class="panel-lbl" style="margin-bottom:12px">Verify Census Tract — FFIEC</div>
+        <div class="fs"><div class="fs-num">1</div><div class="fs-txt">Go to <a href="https://ffiec.cfpb.gov/tools/tract-search" target="_blank">ffiec.cfpb.gov/tools/tract-search</a></div></div>
+        <div class="fs"><div class="fs-num">2</div><div class="fs-txt">Enter address, select year <strong style="color:var(--text)">2023</strong></div></div>
+        <div class="fs"><div class="fs-num">3</div><div class="fs-txt">Find "% of MSA Median Income" in results</div></div>
+        <div class="fs" style="margin-bottom:0"><div class="fs-num">4</div><div class="fs-txt"><strong style="color:var(--accent)">≤80%</strong> = Priority tract → priority rate &nbsp;·&nbsp; <strong style="color:var(--warn)">80–100%</strong> = Eligible, no priority rate &nbsp;·&nbsp; <strong style="color:var(--danger)">&gt;100%</strong> = INELIGIBLE</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- TAB 2: ANALYZER -->
+<div class="page" id="page-analyzer">
+<div class="analyzer-wrap">
+  <div class="az-left">
+    <div class="az-sec">
+      <div class="sec-lbl">Acquisition</div>
+      <div class="ir"><span class="ir-lbl">Purchase Price</span><input type="number" id="a-price" value="490000" oninput="updateAnalyzer()"></div>
+      <div class="ir"><span class="ir-lbl">Rental Units</span><input type="number" id="a-units" value="2" min="0" max="3" oninput="updateAnalyzer()"></div>
+      <div class="ir"><span class="ir-lbl">Rent / Unit ($)</span><input type="number" id="a-rent" value="1500" oninput="updateAnalyzer()"></div>
+      <div class="ir"><span class="ir-lbl">ARV ($)</span><input type="number" id="a-arv" value="530000" oninput="updateAnalyzer()"></div>
+      <div class="ir"><span class="ir-lbl">Rehab Budget ($)</span><input type="number" id="a-rehab" value="30000" oninput="updateAnalyzer()"></div>
+    </div>
+    <div class="az-sec">
+      <div class="sec-lbl">PITI Components</div>
+      <div class="ir"><span class="ir-lbl">Tax Rate (%)</span><input type="number" id="a-taxrate" value="1.25" step="0.01" oninput="updateAnalyzer()"></div>
+      <div class="ir"><span class="ir-lbl">Insurance / mo</span><input type="number" id="a-ins" value="300" oninput="updateAnalyzer()"></div>
+      <div class="ir"><span class="ir-lbl">HOA / mo</span><input type="number" id="a-hoa" value="0" oninput="updateAnalyzer()"></div>
+    </div>
+    <div class="az-sec">
+      <div class="sec-lbl">Operating</div>
+      <div class="ir"><span class="ir-lbl">Vacancy (%)</span><input type="number" id="a-vacancy" value="5" step="0.5" oninput="updateAnalyzer()"></div>
+      <div class="ir"><span class="ir-lbl">Maintenance (%)</span><input type="number" id="a-maint" value="5" step="0.5" oninput="updateAnalyzer()"></div>
+      <div class="ir"><span class="ir-lbl">Mgmt Fee (%)</span><input type="number" id="a-mgmt" value="0" step="0.5" oninput="updateAnalyzer()"></div>
+    </div>
+    <div class="az-sec">
+      <div class="sec-lbl">Location</div>
+      <div class="ir"><span class="ir-lbl">Census Tract %</span><input type="number" id="a-tract" placeholder="—" oninput="updateAnalyzer()"></div>
+      <div class="ir">
+        <span class="ir-lbl">Area</span>
+        <select id="a-area" onchange="updateAnalyzer()">
+          <option value="watts">Watts</option><option value="compton">Compton</option>
+          <option value="hyde">Hyde Park</option><option value="inglewood">Inglewood</option>
+          <option value="west-adams">West Adams</option><option value="hawthorne">Hawthorne</option>
+          <option value="lynwood">Lynwood</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn-sm" onclick="syncToIntake()">↗ Send to Intake Tab</button>
+  </div>
+
+  <div class="az-center">
+    <div class="kpi-row">
+      <div class="kpi"><div class="kpi-l">All-In Cost</div><div class="kpi-v" id="k-allin">—</div><div class="kpi-s">Price + Rehab</div></div>
+      <div class="kpi"><div class="kpi-l">Equity at Close</div><div class="kpi-v" id="k-equity">—</div><div class="kpi-s">ARV − All-In</div></div>
+      <div class="kpi"><div class="kpi-l">Monthly Cashflow</div><div class="kpi-v" id="k-cashflow">—</div><div class="kpi-s">After all costs</div></div>
+      <div class="kpi"><div class="kpi-l">Full PITI</div><div class="kpi-v" id="k-fullpiti">—</div><div class="kpi-s">Before credit</div></div>
+      <div class="kpi"><div class="kpi-l">Cap Room</div><div class="kpi-v" id="k-caproom">—</div><div class="kpi-s">Buffer vs $1,862</div></div>
+    </div>
+
+    <div class="piti-hero">
+      <div class="ph-title">PITI Breakdown &amp; Feasibility</div>
+      <div class="ph-grid">
+        <div><div class="ph-lbl">P&amp;I</div><div class="ph-val" id="a-pi">—</div></div>
+        <div><div class="ph-lbl">Tax</div><div class="ph-val" id="a-tax-d">—</div></div>
+        <div><div class="ph-lbl">Insurance</div><div class="ph-val" id="a-ins-d">—</div></div>
+        <div><div class="ph-lbl">HOA</div><div class="ph-val" id="a-hoa-d">—</div></div>
+      </div>
+      <div class="eff-row" style="font-size:11px;font-weight:400;margin-bottom:5px;">
+        <span style="color:var(--muted2)">Rental Credit (<span id="a-ulbl">2</span> units × $<span id="a-rlbl">1500</span> × 75%)</span>
+        <span class="c-green" id="a-credit-d">—</span>
+      </div>
+      <div class="eff-row"><span>Effective Monthly Payment</span><span id="a-eff-d">—</span></div>
+      <div style="font-size:9px;color:var(--muted);margin-bottom:5px;letter-spacing:.1em;text-transform:uppercase">Feasibility: <span id="a-cap-pct">—</span> of $1,862 cap</div>
+      <div class="ebar-wrap" style="height:10px"><div class="ebar-fill" id="a-ebar" style="width:0%"></div></div>
+      <div class="ebar-lbls" style="margin-top:6px"><span>$0</span><span class="c-green">CAP $1,862</span><span style="color:var(--muted)">TOTAL $4,112</span></div>
+    </div>
+
+    <div class="metric-row">
+      <div class="metric"><div class="metric-l">Cash-on-Cash Return</div><div class="metric-v" id="m-coc">—</div><div class="metric-bm">≥8% great · ≥6% OK</div></div>
+      <div class="metric"><div class="metric-l">Gross Rent Multiplier</div><div class="metric-v" id="m-grm">—</div><div class="metric-bm">≤10 great · ≤12 OK</div></div>
+      <div class="metric"><div class="metric-l">Cap Rate</div><div class="metric-v" id="m-cap">—</div><div class="metric-bm">≥5.5% target South LA</div></div>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-lbl">Comparable Sales — enter from Redfin / Zillow</div>
+      <table class="comp-tbl">
+        <thead><tr><th>Address</th><th>Sale Price</th><th>Beds</th><th>Baths</th><th>Sqft</th><th>$/Sqft</th></tr></thead>
+        <tbody>
+          <tr><td><input type="text" placeholder="Comp 1 address"></td><td><input type="number" class="cp" placeholder="500000" oninput="calcPsf(this)"></td><td><input type="number" placeholder="3"></td><td><input type="number" placeholder="2"></td><td><input type="number" class="cs" placeholder="1200" oninput="calcPsf(this)"></td><td><span class="psf-val c-green">—</span></td></tr>
+          <tr><td><input type="text" placeholder="Comp 2 address"></td><td><input type="number" class="cp" placeholder="480000" oninput="calcPsf(this)"></td><td><input type="number" placeholder="3"></td><td><input type="number" placeholder="2"></td><td><input type="number" class="cs" placeholder="1150" oninput="calcPsf(this)"></td><td><span class="psf-val c-green">—</span></td></tr>
+          <tr><td><input type="text" placeholder="Comp 3 address"></td><td><input type="number" class="cp" placeholder="510000" oninput="calcPsf(this)"></td><td><input type="number" placeholder="4"></td><td><input type="number" placeholder="3"></td><td><input type="number" class="cs" placeholder="1300" oninput="calcPsf(this)"></td><td><span class="psf-val c-green">—</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="chart-card">
+      <div class="chart-lbl">5-Year Value Projection — <span id="area-rate-lbl">—</span></div>
+      <canvas id="apprChart" height="165"></canvas>
+    </div>
+
+    <div style="margin-bottom:16px">
+      <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:9px">NACA Eligibility Flags</div>
+      <div class="flags-grid" id="flags"></div>
+    </div>
+  </div>
+
+  <div class="az-right">
+    <div class="bd-sec">
+      <div class="bd-title">Monthly Income</div>
+      <div class="bd-row"><span class="bd-lbl">Gross Rental</span><span class="bd-val c-green" id="b-gross">—</span></div>
+      <div class="bd-row"><span class="bd-lbl">Vacancy Loss</span><span class="bd-val c-red" id="b-vac">—</span></div>
+      <div class="bd-total"><span>Net Rental</span><span id="b-net">—</span></div>
+    </div>
+    <div class="bd-sec">
+      <div class="bd-title">Monthly Expenses</div>
+      <div class="bd-row"><span class="bd-lbl">P&amp;I</span><span class="bd-val" id="b-pi">—</span></div>
+      <div class="bd-row"><span class="bd-lbl">Property Tax</span><span class="bd-val" id="b-tax">—</span></div>
+      <div class="bd-row"><span class="bd-lbl">Insurance</span><span class="bd-val" id="b-ins">—</span></div>
+      <div class="bd-row"><span class="bd-lbl">HOA</span><span class="bd-val" id="b-hoa">—</span></div>
+      <div class="bd-row"><span class="bd-lbl">Maintenance</span><span class="bd-val" id="b-maint">—</span></div>
+      <div class="bd-row"><span class="bd-lbl">Mgmt Fee</span><span class="bd-val" id="b-mgmt">—</span></div>
+      <div class="bd-total"><span>Total Expenses</span><span id="b-total">—</span></div>
+    </div>
+    <div class="bd-sec">
+      <div class="bd-title">Cash Position</div>
+      <div class="bd-row"><span class="bd-lbl">Available Funds</span><span class="bd-val">$48,400</span></div>
+      <div class="bd-row"><span class="bd-lbl">MRF Required</span><span class="bd-val c-red">−$28,782</span></div>
+      <div class="bd-row"><span class="bd-lbl">Rehab Budget</span><span class="bd-val c-red" id="b-rehab">—</span></div>
+      <div class="bd-total"><span>Post-Close</span><span id="b-surplus">—</span></div>
+    </div>
+    <div class="bd-sec">
+      <div class="bd-title">NACA Profile</div>
+      <div class="bd-row"><span class="bd-lbl">ID</span><span class="bd-val">#2722107</span></div>
+      <div class="bd-row"><span class="bd-lbl">Rate</span><span class="bd-val c-green">6.125%</span></div>
+      <div class="bd-row"><span class="bd-lbl">Max Purchase</span><span class="bd-val">$535,540</span></div>
+      <div class="bd-row"><span class="bd-lbl">PITI Cap</span><span class="bd-val">$1,862/mo</span></div>
+      <div class="bd-row"><span class="bd-lbl">Rental Credit</span><span class="bd-val">75% of gross</span></div>
+      <div class="bd-row"><span class="bd-lbl">Status</span><span class="bd-val c-warn">Non-Priority</span></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- TAB 3: UNIT MATRIX -->
+<div class="page" id="page-matrix">
+<div class="matrix-wrap">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px;">
+    <div><div class="mx-h1">Purchasing Power Matrix</div><div class="mx-sub">Darcell Edwards · NACA #2722107 · 6.125% 30yr · $48,400 available · MRF $28,782</div></div>
+    <span class="badge b-warn" style="font-size:10px;padding:5px 12px">⚡ NACA Qualified · Non-Priority</span>
+  </div>
+
+  <table class="mx-tbl">
+    <thead><tr><th>Property Type</th><th>Rental Units</th><th>Max Purchase Power</th><th>Rental Credit/mo</th><th>Effective Payment</th><th>MRF Covered?</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>SFR Only</td><td>0</td><td>~$260,000</td><td>$0</td><td>~$1,862/mo</td><td class="c-green">✓</td><td><span class="badge b-red">Limited</span></td></tr>
+      <tr><td>Duplex</td><td>1</td><td>~$390,000</td><td>$1,125</td><td>~$1,200/mo</td><td class="c-green">✓</td><td><span class="badge b-warn">Viable</span></td></tr>
+      <tr><td>SFR + ADU</td><td>1</td><td>~$390,000</td><td>$1,125</td><td>~$1,200/mo</td><td class="c-green">✓</td><td><span class="badge b-warn">Viable</span></td></tr>
+      <tr class="opt"><td><strong>Triplex ⭐</strong></td><td><strong>2</strong></td><td><strong>~$535,540</strong></td><td class="c-green"><strong>$2,250</strong></td><td class="c-green"><strong>~$1,537/mo</strong></td><td class="c-green">✓</td><td><span class="badge b-green">Optimal</span></td></tr>
+      <tr class="opt"><td><strong>SFR + ADU + JADU ⭐</strong></td><td><strong>2</strong></td><td><strong>~$535,540</strong></td><td class="c-green"><strong>$2,250</strong></td><td class="c-green"><strong>~$1,537/mo</strong></td><td class="c-green">✓</td><td><span class="badge b-green">Optimal</span></td></tr>
+      <tr><td>Fourplex</td><td>3</td><td>~$535,540</td><td>$3,375</td><td>~$412/mo</td><td class="c-green">✓</td><td><span class="badge b-green">Optimal</span></td></tr>
+    </tbody>
+  </table>
+
+  <div class="insight-box">
+    <strong>Key Insight:</strong> Your $535,540 max is ONLY achievable with 2+ rental units.
+    NACA credits 75% of gross rental income toward your payment capacity.
+    A plain SFR or Duplex does <em>not</em> unlock full purchasing power.
+    <strong style="color:var(--text)">Target: Triplex or SFR + ADU + JADU.</strong>
+  </div>
+
+  <div class="sec-title">Seller Buy-Down Calculator</div>
+  <div class="sec-desc">Each 1.5% of loan = 0.25% rate reduction · Seller can contribute up to 10% of purchase price · Modeled on $490K loan</div>
+  <table class="bd-tbl">
+    <thead><tr><th>Buy-Down Points</th><th>Cost (on $490K)</th><th>Rate Reduction</th><th>New Rate</th><th>New P&amp;I/mo</th><th>Monthly Savings</th><th>Annual Savings</th></tr></thead>
+    <tbody id="bd-tbody"></tbody>
+  </table>
+
+  <div class="sec-title">ADU Path to 3 Units — LA County</div>
+  <div class="sec-desc">California law: every R1 lot can have 1 ADU (up to 1,200 sqft) + 1 JADU (up to 500 sqft). No special zoning needed — permits only.</div>
+  <div class="adu-grid">
+    <div class="adu-card"><div class="adu-tag">Option A</div><div class="adu-name">Legalize Unpermitted ADU</div><div class="adu-cost c-green">$15K – $40K</div><div class="adu-note">Best ROI if structure exists. Add JADU inside main for 3rd unit.</div></div>
+    <div class="adu-card"><div class="adu-tag">Option B</div><div class="adu-name">Garage → ADU Conversion</div><div class="adu-cost c-green">$60K – $100K</div><div class="adu-note">Detached garage to livable ADU. Very common on South LA lots.</div></div>
+    <div class="adu-card"><div class="adu-tag">Option C</div><div class="adu-name">New Detached ADU Build</div><div class="adu-cost c-warn">$150K – $200K</div><div class="adu-note">Highest cost. Needs 5,000+ sqft lot. Best long-term rental value.</div></div>
+    <div class="adu-card"><div class="adu-tag">Verify At</div><div class="adu-name">Resources</div><div class="adu-note" style="line-height:2"><a href="https://ladbs.org" target="_blank">LADBS.org</a> — Permits &amp; COO<br><a href="https://zimas.lacity.org" target="_blank">ZIMAS.lacity.org</a> — Zoning<br><a href="https://assessor.lacounty.gov" target="_blank">assessor.lacounty.gov</a> — Lot size<br><a href="https://ffiec.cfpb.gov" target="_blank">ffiec.cfpb.gov</a> — Census tract %</div></div>
+  </div>
+</div>
+</div>
+
+<script>
+// ── CONSTANTS ──
+const RATE_A = 6.125, R = RATE_A/100/12, N = 360;
+const PIF = (()=>{ const p=Math.pow(1+R,N); return R*p/(p-1); })();
+const CAP=1862, TOTAL=4112, MAX=535540, AVAIL=48400, MRF=28782;
+const TYPE_U={sfr:0,'sfr-adu':1,duplex:1,'sfr-adu-jadu':2,triplex:2,fourplex:3};
+const MAX_U={0:260000,1:390000,2:535540,3:535540};
+const APPR={watts:.055,compton:.045,hyde:.065,inglewood:.08,'west-adams':.09,hawthorne:.04,lynwood:.045};
+const APPR_LBL={watts:'Watts ~5.5%/yr',compton:'Compton ~4.5%/yr',hyde:'Hyde Park ~6.5%/yr',inglewood:'Inglewood ~8%/yr','west-adams':'West Adams ~9%/yr',hawthorne:'Hawthorne ~4%/yr',lynwood:'Lynwood ~4.5%/yr'};
+
+// ── HELPERS ──
+const piCalc = p => p*PIF;
+function pitiCalc(price,tr=.0125,ins=300,hoa=0){const pi=piCalc(price),t=(price*tr)/12;return{pi,tax:t,ins,hoa,total:pi+t+ins+hoa};}
+const cred = (u,r=1500) => u*r*.75;
+const fmt  = n => (n===null||isNaN(n)) ? '—' : '$'+Math.round(n).toLocaleString();
+const fmtP = (n,d=1) => isNaN(n) ? '—' : n.toFixed(d)+'%';
+const effC = e => e<=CAP?'var(--accent)':e<=CAP*1.08?'var(--warn)':'var(--danger)';
+
+// ── TAB SWITCH ──
+function showTab(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── INTAKE ──
+let pChart=null;
+function onPriceChange(){
+  const price=parseFloat(document.getElementById('i-price').value);
+  const type=document.getElementById('i-type').value;
+  const units=TYPE_U[type]??null;
+  const box=document.getElementById('piti-live');
+  if(!price||price<=0){box.style.display='none';return;}
+  box.style.display='block';
+  const p=pitiCalc(price);
+  document.getElementById('pl-pi').textContent=fmt(p.pi);
+  document.getElementById('pl-tax').textContent=fmt(p.tax);
+  document.getElementById('pl-piti').textContent=fmt(p.total);
+  if(units!==null){
+    const cr=cred(units),eff=p.total-cr;
+    document.getElementById('pl-units').textContent=units;
+    document.getElementById('pl-credit').textContent='−'+fmt(cr);
+    const e=document.getElementById('pl-eff');
+    e.textContent=fmt(eff); e.style.color=effC(eff);
+  } else {
+    document.getElementById('pl-units').textContent='?';
+    document.getElementById('pl-credit').textContent='—';
+    document.getElementById('pl-eff').textContent='—';
+  }
+}
+
+function runCheck(){
+  const addr=document.getElementById('i-address').value||'Property';
+  const price=parseFloat(document.getElementById('i-price').value);
+  const lot=parseFloat(document.getElementById('i-lot').value);
+  const zoning=document.getElementById('i-zoning').value;
+  const type=document.getElementById('i-type').value;
+  const tract=parseFloat(document.getElementById('i-tract').value);
+  const units=TYPE_U[type]??0;
+  const maxPwr=MAX_U[units]??MAX;
+  if(!price){alert('Enter an offer price.');return;}
+  document.getElementById('i-empty').style.display='none';
+  document.getElementById('i-results').style.display='block';
+  document.getElementById('r-addr').textContent=addr;
+  document.getElementById('r-sub').textContent=fmt(price)+' · '+(type||'unknown type');
+  const p=pitiCalc(price),cr=cred(units),eff=p.total-cr;
+  document.getElementById('r-pi').textContent=fmt(p.pi);
+  document.getElementById('r-tax').textContent=fmt(p.tax);
+  document.getElementById('r-piti').textContent=fmt(p.total);
+  document.getElementById('r-cr-units').textContent=units+' unit(s) × $1,500 × 75%';
+  document.getElementById('r-cr-val').textContent='−'+fmt(cr);
+  const re=document.getElementById('r-eff'); re.textContent=fmt(eff); re.style.color=effC(eff);
+  const bp=Math.min((eff/CAP)*100,100);
+  document.getElementById('r-cap-pct').textContent=fmtP((eff/CAP)*100);
+  const eb=document.getElementById('r-ebar'); eb.style.width=bp+'%'; eb.style.background=eff<=CAP?'var(--accent)':'var(--danger)';
+
+  const checks=[
+    price<=MAX?{ok:'pass',t:'Within NACA Limit',d:fmt(price)+' ≤ $535,540 max purchase'}:{ok:'fail',t:'Exceeds NACA Limit',d:fmt(price)+' — '+fmt(price-MAX)+' over the cap'},
+    price<=maxPwr?{ok:'pass',t:'Property Type Supports Price',d:units+' rental unit(s) → max '+fmt(maxPwr)}:{ok:'fail',t:'Property Type Cannot Support This Price',d:'With '+units+' unit(s), max is ~'+fmt(maxPwr)+'. Need more units.'},
+    isNaN(tract)?{ok:'warn',t:'Census Tract — Not Verified',d:'Enter % to check. Use FFIEC tool below.'}:
+      tract<=80?{ok:'pass',t:'Priority Tract ✓ ('+tract+'%)',d:'≤80% — qualifies for NACA priority rate. Better rate possible.'}:
+      tract<=100?{ok:'warn',t:'Eligible — No Priority Rate ('+tract+'%)',d:'You can buy here but no priority rate as a Non-Priority member.'}:
+      {ok:'fail',t:'INELIGIBLE — Tract Above 100% ('+tract+'%)',d:'Non-Priority members CANNOT purchase in tracts above 100% of MSA median.'},
+    isNaN(lot)?{ok:'warn',t:'Lot Size — Not Entered',d:'Need 5,000+ sqft for ADU buildability.'}:
+      lot>=6000?{ok:'pass',t:'Lot Size ✓ — '+lot.toLocaleString()+' sqft',d:'Excellent. Room for detached ADU + JADU → 3 units.'}:
+      lot>=5000?{ok:'pass',t:'Lot Size ✓ — '+lot.toLocaleString()+' sqft',d:'Meets minimum. ADU + JADU feasible.'}:
+      lot>=4000?{ok:'warn',t:'Lot Marginal — '+lot.toLocaleString()+' sqft',d:'Below 5K preference. ADU may be constrained.'}:
+      {ok:'fail',t:'Lot Too Small — '+lot.toLocaleString()+' sqft',d:'Under 4,000 sqft hard min. ADU very difficult.'},
+    !zoning||zoning==='Unknown'?{ok:'warn',t:'Zoning — '+(zoning==='Unknown'?'Must Verify':'Not Selected'),d:'Check ZIMAS.lacity.org. Need R1, R2, or RD.'}:
+      {ok:'pass',t:'Zoning OK — '+zoning,d:zoning+' supports ADU + JADU under California state law.'},
+    eff<=CAP?{ok:'pass',t:'PITI Within Cap ✓',d:'Effective '+fmt(eff)+' ≤ $1,862. Buffer: '+fmt(CAP-eff)}:
+      eff<=CAP*1.08?{ok:'warn',t:'PITI Slightly Over Cap',d:'Effective '+fmt(eff)+' — '+fmt(eff-CAP)+' over cap. Try seller buy-down.'}:
+      {ok:'fail',t:'PITI Exceeds Cap',d:'Effective '+fmt(eff)+' — '+fmt(eff-CAP)+' over $1,862. Need lower price or more units.'}
+  ];
+
+  document.getElementById('r-checks').innerHTML=checks.map(c=>`
+    <div class="check-item ${c.ok==='pass'?'ci-pass':c.ok==='warn'?'ci-warn':'ci-fail'}">
+      <div class="ci-icon">${c.ok==='pass'?'✅':c.ok==='warn'?'⚠️':'❌'}</div>
+      <div class="ci-body"><strong>${c.t}</strong><span>${c.d}</span></div>
+    </div>`).join('');
+
+  const fails=checks.filter(c=>c.ok==='fail').length,warns=checks.filter(c=>c.ok==='warn').length;
+  document.getElementById('r-badge').innerHTML=fails===0&&warns===0
+    ?'<span class="badge b-green" style="font-size:11px;padding:5px 13px">✓ PASS</span>'
+    :fails===0?'<span class="badge b-warn" style="font-size:11px;padding:5px 13px">⚠ REVIEW</span>'
+    :'<span class="badge b-red" style="font-size:11px;padding:5px 13px">✗ FAIL</span>';
+
+  if(pChart) pChart.destroy();
+  const ctx=document.getElementById('powerChart').getContext('2d');
+  const buArr=[0,1,2,3];
+  const cols=buArr.map(u=>u===units?'rgba(184,255,60,.85)':'rgba(184,255,60,.18)');
+  pChart=new Chart(ctx,{type:'bar',data:{
+    labels:['SFR\n0 units','Duplex/SFR+ADU\n1 unit','Triplex/SFR+ADU+JADU\n2 units','Fourplex\n3 units'],
+    datasets:[
+      {label:'Max Power',data:[260000,390000,535540,535540],backgroundColor:cols,borderColor:cols.map(c=>c.includes('.85')?'rgba(184,255,60,1)':'rgba(184,255,60,.3)'),borderWidth:1,borderRadius:4},
+      {label:'Offer',data:[price,price,price,price],type:'line',borderColor:'rgba(255,77,77,.7)',borderWidth:2,borderDash:[5,4],pointRadius:0,fill:false}
+    ]},
+    options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+c.raw.toLocaleString()}}},
+      scales:{x:{ticks:{color:'#555',font:{family:'IBM Plex Mono',size:9}},grid:{color:'rgba(255,255,255,.04)'}},
+              y:{ticks:{color:'#555',font:{family:'IBM Plex Mono',size:9},callback:v=>'$'+(v/1000).toFixed(0)+'K'},grid:{color:'rgba(255,255,255,.04)'}}}}
+  });
+}
+
+// ── ANALYZER ──
+let aChart=null;
+function scoreCalc(d){
+  let s=0;
+  if(d.eff<=CAP) s+=25; else if(d.eff<=CAP*1.05) s+=12; else if(d.eff<=CAP*1.15) s+=4;
+  if(d.cap>=6) s+=20; else if(d.cap>=5.5) s+=15; else if(d.cap>=4.5) s+=8; else if(d.cap>=3) s+=2;
+  if(d.coc>=8) s+=20; else if(d.coc>=6) s+=14; else if(d.coc>=4) s+=7; else if(d.coc>=0) s+=2;
+  if(d.grm>0&&d.grm<=10) s+=15; else if(d.grm<=12) s+=10; else if(d.grm<=14) s+=4;
+  if(d.eq>=50000) s+=20; else if(d.eq>=30000) s+=15; else if(d.eq>=10000) s+=7; else if(d.eq>=0) s+=2;
+  return Math.min(Math.max(Math.round(s),0),100);
+}
+const sVerdict=s=>s>=75?'STRONG BUY':s>=60?'SOLID DEAL':s>=45?'NEGOTIATE':'PASS';
+const sColor=s=>s>=75?'var(--accent)':s>=60?'#88ff88':s>=45?'var(--warn)':'var(--danger)';
+
+function updateAnalyzer(){
+  const price=parseFloat(document.getElementById('a-price').value)||0;
+  const units=parseInt(document.getElementById('a-units').value)||0;
+  const rent=parseFloat(document.getElementById('a-rent').value)||0;
+  const arv=parseFloat(document.getElementById('a-arv').value)||0;
+  const rehab=parseFloat(document.getElementById('a-rehab').value)||0;
+  const taxR=(parseFloat(document.getElementById('a-taxrate').value)||1.25)/100;
+  const ins=parseFloat(document.getElementById('a-ins').value)||300;
+  const hoa=parseFloat(document.getElementById('a-hoa').value)||0;
+  const vacP=(parseFloat(document.getElementById('a-vacancy').value)||5)/100;
+  const mntP=(parseFloat(document.getElementById('a-maint').value)||5)/100;
+  const mgP=(parseFloat(document.getElementById('a-mgmt').value)||0)/100;
+  const area=document.getElementById('a-area').value;
+  const tract=parseFloat(document.getElementById('a-tract').value);
+
+  const p=pitiCalc(price,taxR,ins,hoa);
+  const cr=cred(units,rent),eff=p.total-cr;
+  const gross=units*rent,vacL=gross*vacP,netR=gross-vacL;
+  const mnt=gross*mntP,mg=gross*mgP;
+  const cf=netR-eff-mnt-mg;
+  const allIn=price+rehab,eq=arv-allIn;
+  const noi=(netR-mnt-mg)*12-(p.tax+ins+hoa)*12;
+  const capR=price>0?(noi/price)*100:0;
+  const grm=gross>0?price/(gross*12):0;
+  const coc=(MRF+rehab)>0?(cf*12/(MRF+rehab))*100:0;
+
+  const score=scoreCalc({eff,cap:capR,coc,grm,eq});
+  document.getElementById('score-num').textContent=score;
+  document.getElementById('score-num').style.color=sColor(score);
+  document.getElementById('score-verdict').textContent=sVerdict(score);
+  document.getElementById('score-verdict').style.color=sColor(score);
+
+  const setKpi=(id,val,cls)=>{const e=document.getElementById(id);e.textContent=val;e.className='kpi-v'+(cls?' '+cls:'');};
+  setKpi('k-allin',fmt(allIn));
+  setKpi('k-equity',fmt(eq),eq>=30000?'c-green':eq>=0?'':'c-red');
+  setKpi('k-cashflow',fmt(cf),cf>=0?'c-green':'c-red');
+  setKpi('k-fullpiti',fmt(p.total));
+  const room=CAP-eff; setKpi('k-caproom',room>=0?fmt(room):'−'+fmt(-room),room>=0?'c-green':'c-red');
+
+  document.getElementById('a-pi').textContent=fmt(p.pi);
+  document.getElementById('a-tax-d').textContent=fmt(p.tax);
+  document.getElementById('a-ins-d').textContent=fmt(p.ins);
+  document.getElementById('a-hoa-d').textContent=fmt(p.hoa);
+  document.getElementById('a-ulbl').textContent=units;
+  document.getElementById('a-rlbl').textContent=rent.toLocaleString();
+  document.getElementById('a-credit-d').textContent='−'+fmt(cr);
+  const ed=document.getElementById('a-eff-d'); ed.textContent=fmt(eff); ed.style.color=effC(eff);
+  const pct=(eff/CAP)*100;
+  document.getElementById('a-cap-pct').textContent=fmtP(pct);
+  const ab=document.getElementById('a-ebar'); ab.style.width=Math.min(pct,100)+'%'; ab.style.background=eff<=CAP?'var(--accent)':'var(--danger)';
+
+  const setM=(id,v,c)=>{const e=document.getElementById(id);e.textContent=v;e.style.color=c;};
+  setM('m-coc',isNaN(coc)?'—':fmtP(coc),coc>=8?'var(--accent)':coc>=6?'#88ff88':coc>=0?'var(--warn)':'var(--danger)');
+  setM('m-grm',grm>0?grm.toFixed(1)+'x':'—',grm<=10?'var(--accent)':grm<=12?'#88ff88':'var(--warn)');
+  setM('m-cap',isNaN(capR)?'—':fmtP(capR),capR>=6?'var(--accent)':capR>=5.5?'#88ff88':capR>=4?'var(--warn)':'var(--danger)');
+
+  document.getElementById('b-gross').textContent=fmt(gross);
+  document.getElementById('b-vac').textContent='−'+fmt(vacL);
+  document.getElementById('b-net').textContent=fmt(netR);
+  document.getElementById('b-pi').textContent=fmt(p.pi);
+  document.getElementById('b-tax').textContent=fmt(p.tax);
+  document.getElementById('b-ins').textContent=fmt(p.ins);
+  document.getElementById('b-hoa').textContent=fmt(p.hoa);
+  document.getElementById('b-maint').textContent=fmt(mnt);
+  document.getElementById('b-mgmt').textContent=fmt(mg);
+  document.getElementById('b-total').textContent=fmt(p.total+mnt+mg);
+  document.getElementById('b-rehab').textContent='−'+fmt(rehab);
+  const sur=AVAIL-MRF-rehab;
+  const se=document.getElementById('b-surplus'); se.textContent=fmt(sur); se.style.color=sur>=0?'var(--accent)':'var(--danger)';
+
+  const flags=[
+    price<=MAX?{ok:'pass',t:'Price ≤ $535,540'}:{ok:'fail',t:'Price over $535,540'},
+    eff<=CAP?{ok:'pass',t:'Payment within $1,862'}:{ok:'fail',t:'Payment over $1,862 cap'},
+    isNaN(tract)?{ok:'warn',t:'Tract % not entered'}:tract<=80?{ok:'pass',t:'Priority tract ≤80%'}:tract<=100?{ok:'warn',t:'Eligible, no priority rate'}:{ok:'fail',t:'Ineligible tract >100%'},
+    units>=2?{ok:'pass',t:'2+ units → full $535K power'}:{ok:'warn',t:'Need 2+ units for $535K'},
+    sur>=0?{ok:'pass',t:'Funds sufficient post-close'}:{ok:'fail',t:'Funds short '+fmt(-sur)},
+    eq>=30000?{ok:'pass',t:'Equity ≥ $30K at close'}:eq>=0?{ok:'warn',t:'Equity < $30K'}:{ok:'fail',t:'Buying above ARV'}
+  ];
+  document.getElementById('flags').innerHTML=flags.map(f=>`<div class="flag ${f.ok==='pass'?'fg-pass':f.ok==='warn'?'fg-warn':'fg-fail'}"><span>${f.ok==='pass'?'✅':f.ok==='warn'?'⚠️':'❌'}</span><span>${f.t}</span></div>`).join('');
+
+  const apR=APPR[area]||.055;
+  document.getElementById('area-rate-lbl').textContent=APPR_LBL[area]||'';
+  const base=arv>0?arv:allIn;
+  if(aChart) aChart.destroy();
+  const ctx2=document.getElementById('apprChart').getContext('2d');
+  aChart=new Chart(ctx2,{type:'line',data:{
+    labels:[0,1,2,3,4,5].map(y=>y===0?'Today':'Yr '+y),
+    datasets:[{data:[0,1,2,3,4,5].map(y=>base*Math.pow(1+apR,y)),borderColor:'rgba(184,255,60,.8)',backgroundColor:'rgba(184,255,60,.06)',borderWidth:2,pointBackgroundColor:'rgba(184,255,60,1)',pointRadius:4,fill:true,tension:.3}]
+  },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+Math.round(c.raw).toLocaleString()}}},
+    scales:{x:{ticks:{color:'#555',font:{family:'IBM Plex Mono',size:9}},grid:{color:'rgba(255,255,255,.04)'}},
+            y:{ticks:{color:'#555',font:{family:'IBM Plex Mono',size:9},callback:v=>'$'+(v/1000).toFixed(0)+'K'},grid:{color:'rgba(255,255,255,.04)'}}}}
+  });
+}
+
+function calcPsf(inp){
+  const row=inp.closest('tr');
+  const pv=parseFloat(row.querySelector('.cp').value);
+  const sv=parseFloat(row.querySelector('.cs').value);
+  row.querySelector('.psf-val').textContent=(pv&&sv)?'$'+Math.round(pv/sv).toLocaleString()+'/sqft':'—';
+}
+
+function syncToIntake(){
+  document.getElementById('i-price').value=document.getElementById('a-price').value;
+  const u=parseInt(document.getElementById('a-units').value)||0;
+  document.getElementById('i-type').value={0:'sfr',1:'duplex',2:'triplex',3:'fourplex'}[u]||'';
+  document.getElementById('i-tract').value=document.getElementById('a-tract').value;
+  onPriceChange();
+  const btns=document.querySelectorAll('.tab-btn');
+  btns.forEach(b=>b.classList.remove('active'));
+  showTab('intake',btns[0]);
+}
+
+// ── BUYDOWN TABLE ──
+function buildBuydown(){
+  const loan=490000, basePI=loan*PIF;
+  document.getElementById('bd-tbody').innerHTML=[1.5,3,4.5,6,7.5,9].map(pts=>{
+    const red=pts/6, cost=loan*(pts/100);
+    const nr=(RATE_A-red)/100/12, np=Math.pow(1+nr,N);
+    const newPI=loan*(nr*np/(np-1)), sav=basePI-newPI;
+    return `<tr><td>${pts.toFixed(1)}% of loan</td><td>${fmt(cost)}</td><td class="c-green">−${red.toFixed(2)}%</td><td class="c-green" style="font-weight:600">${(RATE_A-red).toFixed(3)}%</td><td>${fmt(newPI)}/mo</td><td class="c-green">+${fmt(sav)}/mo</td><td class="c-green">+${fmt(sav*12)}/yr</td></tr>`;
+  }).join('');
+}
+
+window.addEventListener('load',()=>{ updateAnalyzer(); buildBuydown(); });
+</script>
 </body>
-
-<body>
-    <section class= "fwh-slide fwh-slide--bg-gray">
-       
-        <h1>Interests: Blink Social </h1>
-
-        <p>
-
-        <iframe width="375" height="275" src="https://www.youtube-nocookie.com/embed/BHULtca5rU8" title="YouTube video player" frameborder="10" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
-        <iframe width="375" height="275" src="https://www.youtube.com/embed/xr-YmeEqLME" title="YouTube video player" frameborder="10" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-
-        <iframe width="375" height="275" src="https://www.youtube-nocookie.com/embed/lDJLB_B1OzU" title="YouTube video player" frameborder="10" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-       
-       </p>
-        
-    </section>
-</body>
-
-<body>
-    <section class= "fwh-slide fwh-slide--bg-black">
-        <h1>School & Jobs </h1>
-
-       
-        
-       <a href ="https://howard.edu/" target="_blank"> <img src= "https://media-exp2.licdn.com/dms/image/C4E0BAQE0Qyw2gROlgA/company-logo_200_200/0/1519856335417?e=1662595200&v=beta&t=gtDjITl_0mOK_UqyfmCebpBrtoKVmbUSbXxnr7d4CZA" 
-        alt="Howard University" style="width 300px;height 300px"/></a>
-
-
-       <a href="https://www.usc.edu/" target="_blank">  <img src="https://media-exp2.licdn.com/dms/image/C4E0BAQHatTfEv4Af6w/company-logo_200_200/0/1519855864375?e=1662595200&v=beta&t=DT-MXeaq7PSQArOYEFFfMQgumQAmuS_kYI5QqSVMKQ0" alt="USC"/></a>
-
-       <a href="https://zapier.com/"target="_blank"> <img src="https://media-exp2.licdn.com/dms/image/C560BAQG-FqKLi26Iww/company-logo_200_200/0/1566950479732?e=1662595200&v=beta&t=Eo17z70DBs7PCvrm1qW6KDKIasZwzKzLJG7dvNOBnpw " alt="Zapier"/></a>
-         
-       <p> Click to View Website </p>
-
-   </section>
-    
-  
-</body>
-
-
-
-
-
-
-
-
-
-
-
+</html>
