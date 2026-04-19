@@ -6,6 +6,7 @@
 <title>NACA Deal OS v3 — Darcell Edwards #2722107</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
   --bg: #080808; --surface: #0f0f0f; --card: #161616;
@@ -165,6 +166,48 @@ select option{background:var(--card);}
 .adu-cost{font-family:var(--sans);font-size:19px;font-weight:800;margin-bottom:5px;}
 .adu-note{font-size:10px;color:var(--muted2);line-height:1.55;}
 .adu-note a{color:var(--accent);text-decoration:none;}
+
+/* ── SAVED DEALS ── */
+.saved-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.saved-header{display:flex;align-items:center;justify-content:space-between;padding:18px 24px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--surface);}
+.saved-header-left{display:flex;align-items:center;gap:14px;}
+.saved-h1{font-family:var(--sans);font-size:18px;font-weight:800;}
+.saved-count{font-size:10px;color:var(--muted);padding:3px 10px;background:var(--card);border:1px solid var(--border2);border-radius:100px;}
+.saved-sync-status{font-size:10px;display:flex;align-items:center;gap:6px;}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);}
+.sync-dot.live{background:var(--accent);}
+.sync-dot.err{background:var(--danger);}
+.saved-grid{flex:1;overflow-y:auto;padding:20px 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;align-content:start;}
+.deal-card{background:var(--card);border:1px solid var(--border2);border-radius:10px;padding:18px;position:relative;transition:border-color .15s;}
+.deal-card:hover{border-color:var(--border2);box-shadow:0 0 0 1px var(--border2);}
+.dc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
+.dc-score{text-align:center;min-width:56px;}
+.dc-score-num{font-family:var(--sans);font-size:30px;font-weight:800;line-height:1;}
+.dc-score-label{font-size:8px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-top:2px;}
+.dc-info{flex:1;padding:0 12px;}
+.dc-name{font-family:var(--sans);font-size:13px;font-weight:700;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dc-addr{font-size:10px;color:var(--muted2);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dc-date{font-size:9px;color:var(--muted);}
+.dc-actions{display:flex;flex-direction:column;gap:5px;}
+.dc-btn{padding:5px 11px;font-family:var(--mono);font-size:10px;font-weight:600;border-radius:4px;cursor:pointer;border:1px solid;white-space:nowrap;transition:opacity .15s;}
+.dc-btn:hover{opacity:.8;}
+.dc-btn-load{background:var(--accent-bg);color:var(--accent);border-color:var(--accent-br);}
+.dc-btn-del{background:var(--danger-bg);color:var(--danger);border-color:rgba(255,77,77,.3);}
+.dc-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.dc-metric{background:var(--surface);border-radius:5px;padding:8px 9px;}
+.dc-metric-l{font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px;}
+.dc-metric-v{font-family:var(--sans);font-size:13px;font-weight:700;}
+.saved-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--muted);gap:12px;text-align:center;}
+.btn-save-deal{padding:9px 18px;background:var(--accent);color:#000;font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:none;border-radius:5px;cursor:pointer;transition:opacity .15s;white-space:nowrap;}
+.btn-save-deal:hover{opacity:.85;}
+/* name edit input on card */
+.dc-name-input{background:transparent;border:none;border-bottom:1px solid var(--border2);font-family:var(--sans);font-size:13px;font-weight:700;color:var(--text);outline:none;width:100%;margin-bottom:3px;}
+.dc-name-input:focus{border-bottom-color:var(--accent);}
+/* toast */
+.toast{position:fixed;bottom:20px;right:20px;padding:10px 18px;background:var(--card);border:1px solid var(--border2);border-radius:7px;font-size:12px;z-index:999;opacity:0;transform:translateY(8px);transition:all .25s;pointer-events:none;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast.success{border-color:var(--accent-br);color:var(--accent);}
+.toast.error{border-color:rgba(255,77,77,.3);color:var(--danger);}
 </style>
 </head>
 <body>
@@ -175,6 +218,7 @@ select option{background:var(--card);}
     <button class="tab-btn active" onclick="showTab('intake',this)">⬛ Intake</button>
     <button class="tab-btn" onclick="showTab('analyzer',this)">📊 Analyzer</button>
     <button class="tab-btn" onclick="showTab('matrix',this)">📋 Unit Matrix</button>
+    <button class="tab-btn" onclick="showTab('saved',this)" id="saved-tab-btn">💾 Saved <span id="saved-count-badge"></span></button>
   </div>
   <div class="score-area">
     <div>
@@ -309,6 +353,7 @@ select option{background:var(--card);}
       </div>
     </div>
     <button class="btn-sm" onclick="syncToIntake()">↗ Send to Intake Tab</button>
+    <button class="btn-save-deal" style="width:100%;margin-top:8px;" onclick="saveDeal()">💾 Save This Deal</button>
   </div>
 
   <div class="az-center">
@@ -448,6 +493,31 @@ select option{background:var(--card);}
   </div>
 </div>
 </div>
+
+<!-- TAB 4: SAVED DEALS -->
+<div class="page" id="page-saved">
+<div class="saved-wrap">
+  <div class="saved-header">
+    <div class="saved-header-left">
+      <div class="saved-h1">Saved Deals</div>
+      <div class="saved-count" id="saved-count-label">0 deals</div>
+    </div>
+    <div class="saved-sync-status">
+      <div class="sync-dot" id="sync-dot"></div>
+      <span id="sync-label" style="color:var(--muted);font-size:10px">Connecting…</span>
+    </div>
+  </div>
+  <div id="saved-grid" class="saved-grid">
+    <div class="saved-empty" id="saved-empty">
+      <div style="font-size:32px;opacity:.3">💾</div>
+      <div style="font-size:12px;line-height:1.7">No saved deals yet.<br>Go to <strong style="color:var(--text)">Analyzer</strong> and hit <strong style="color:var(--accent)">Save This Deal</strong>.</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
 
 <script>
 // ── CONSTANTS ──
@@ -710,7 +780,270 @@ function buildBuydown(){
   }).join('');
 }
 
-window.addEventListener('load',()=>{ updateAnalyzer(); buildBuydown(); });
+window.addEventListener('load',()=>{ updateAnalyzer(); buildBuydown(); initSupabase(); });
+
+// ── SUPABASE SETUP ──
+const SB_URL = 'https://zpcwxndahyfxriperbnr.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpwY3d4bmRhaHlmeHJpcGVyYm5yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2NDExMDQsImV4cCI6MjA5MjIxNzEwNH0.rAaHd30rt74d_m7c9I_fvEi3ERVTwgQUXCHZcGK9A3c';
+let sb = null;
+
+function initSupabase(){
+  try {
+    sb = window.supabase.createClient(SB_URL, SB_KEY);
+    setSyncStatus('live','Supabase connected');
+    loadSavedDeals();
+  } catch(e){
+    setSyncStatus('err','Offline — using local');
+    loadFromLocal();
+  }
+}
+
+function setSyncStatus(state, label){
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  dot.className = 'sync-dot' + (state==='live'?' live':state==='err'?' err':'');
+  lbl.textContent = label;
+  lbl.style.color = state==='live'?'var(--accent)':state==='err'?'var(--danger)':'var(--muted)';
+}
+
+// ── TOAST ──
+function showToast(msg, type='success'){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(()=>t.className='toast',2800);
+}
+
+// ── COLLECT CURRENT ANALYZER STATE ──
+function collectDeal(){
+  const price=parseFloat(document.getElementById('a-price').value)||0;
+  const units=parseInt(document.getElementById('a-units').value)||0;
+  const rent=parseFloat(document.getElementById('a-rent').value)||0;
+  const arv=parseFloat(document.getElementById('a-arv').value)||0;
+  const rehab=parseFloat(document.getElementById('a-rehab').value)||0;
+  const taxR=(parseFloat(document.getElementById('a-taxrate').value)||1.25)/100;
+  const ins=parseFloat(document.getElementById('a-ins').value)||300;
+  const hoa=parseFloat(document.getElementById('a-hoa').value)||0;
+  const vacP=(parseFloat(document.getElementById('a-vacancy').value)||5)/100;
+  const mntP=(parseFloat(document.getElementById('a-maint').value)||5)/100;
+  const mgP=(parseFloat(document.getElementById('a-mgmt').value)||0)/100;
+  const area=document.getElementById('a-area').value;
+  const tract=parseFloat(document.getElementById('a-tract').value)||null;
+
+  const p=pitiCalc(price,taxR,ins,hoa);
+  const cr=cred(units,rent),eff=p.total-cr;
+  const gross=units*rent,vacL=gross*vacP,netR=gross-vacL;
+  const mnt=gross*mntP,mg=gross*mgP;
+  const cf=netR-eff-mnt-mg;
+  const allIn=price+rehab,eq=arv-allIn;
+  const noi=(netR-mnt-mg)*12-(p.tax+ins+hoa)*12;
+  const capR=price>0?(noi/price)*100:0;
+  const grm=gross>0?price/(gross*12):0;
+  const coc=(MRF+rehab)>0?(cf*12/(MRF+rehab))*100:0;
+  const score=scoreCalc({eff,cap:capR,coc,grm,eq});
+
+  return {
+    deal_name: `Deal at ${fmt(price)}`,
+    address: document.getElementById('i-address').value || '',
+    price, units, rent_per_unit:rent, arv, rehab,
+    tax_rate:(parseFloat(document.getElementById('a-taxrate').value)||1.25),
+    insurance:ins, hoa,
+    vacancy_pct:(parseFloat(document.getElementById('a-vacancy').value)||5),
+    maint_pct:(parseFloat(document.getElementById('a-maint').value)||5),
+    mgmt_pct:(parseFloat(document.getElementById('a-mgmt').value)||0),
+    area, census_tract:tract,
+    score, verdict:sVerdict(score),
+    effective_payment:Math.round(eff), full_piti:Math.round(p.total),
+    cap_rate:parseFloat(capR.toFixed(2)), coc_return:parseFloat(coc.toFixed(2)),
+    grm:parseFloat(grm.toFixed(2)), equity:Math.round(eq),
+    monthly_cashflow:Math.round(cf), all_in:Math.round(allIn)
+  };
+}
+
+// ── SAVE DEAL ──
+async function saveDeal(){
+  const deal = collectDeal();
+  if(!deal.price){ showToast('Enter a price first','error'); return; }
+
+  // Ask for a name
+  const name = window.prompt('Name this deal:', deal.deal_name);
+  if(name === null) return; // cancelled
+  deal.deal_name = name.trim() || deal.deal_name;
+
+  try {
+    if(sb){
+      const {error} = await sb.from('saved_deals').insert([deal]);
+      if(error) throw error;
+      showToast('✓ Saved to Supabase');
+    } else {
+      throw new Error('no sb');
+    }
+  } catch(e){
+    // fallback to localStorage
+    const local = JSON.parse(localStorage.getItem('naca_deals')||'[]');
+    deal.id = 'local_'+Date.now();
+    deal.created_at = new Date().toISOString();
+    local.unshift(deal);
+    localStorage.setItem('naca_deals', JSON.stringify(local));
+    showToast('✓ Saved locally (offline)','success');
+  }
+
+  loadSavedDeals();
+}
+
+// ── LOAD DEALS ──
+async function loadSavedDeals(){
+  let deals = [];
+
+  try {
+    if(sb){
+      const {data, error} = await sb.from('saved_deals').select('*').order('created_at',{ascending:false});
+      if(error) throw error;
+      deals = data || [];
+      setSyncStatus('live','Supabase · '+deals.length+' deals');
+    } else throw new Error('no sb');
+  } catch(e){
+    deals = loadFromLocal();
+    setSyncStatus('err','Local only');
+  }
+
+  renderDeals(deals);
+}
+
+function loadFromLocal(){
+  return JSON.parse(localStorage.getItem('naca_deals')||'[]');
+}
+
+// ── RENDER DEALS ──
+function renderDeals(deals){
+  const grid = document.getElementById('saved-grid');
+  const empty = document.getElementById('saved-empty');
+  const countBadge = document.getElementById('saved-count-badge');
+  const countLabel = document.getElementById('saved-count-label');
+
+  countBadge.textContent = deals.length > 0 ? '('+deals.length+')' : '';
+  countLabel.textContent = deals.length + (deals.length===1?' deal':' deals');
+
+  if(!deals.length){
+    empty.style.display='flex';
+    // remove old cards
+    grid.querySelectorAll('.deal-card').forEach(c=>c.remove());
+    return;
+  }
+  empty.style.display='none';
+  grid.querySelectorAll('.deal-card').forEach(c=>c.remove());
+
+  deals.forEach(d=>{
+    const color = sColor(d.score||0);
+    const verdict = d.verdict || sVerdict(d.score||0);
+    const date = d.created_at ? new Date(d.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+
+    const card = document.createElement('div');
+    card.className = 'deal-card';
+    card.innerHTML = `
+      <div class="dc-top">
+        <div class="dc-score">
+          <div class="dc-score-num" style="color:${color}">${d.score||'—'}</div>
+          <div class="dc-score-label" style="color:${color}">${verdict}</div>
+        </div>
+        <div class="dc-info">
+          <input class="dc-name-input" value="${escHtml(d.deal_name||'Untitled')}" data-id="${d.id}" onblur="renameDeal(this)" onkeydown="if(event.key==='Enter')this.blur()">
+          <div class="dc-addr">${escHtml(d.address||'No address')}</div>
+          <div class="dc-date">${date}</div>
+        </div>
+        <div class="dc-actions">
+          <button class="dc-btn dc-btn-load" onclick='loadDeal(${JSON.stringify(JSON.stringify(d))})'>↗ Load</button>
+          <button class="dc-btn dc-btn-del" onclick="deleteDeal('${d.id}')">✕ Del</button>
+        </div>
+      </div>
+      <div class="dc-metrics">
+        <div class="dc-metric">
+          <div class="dc-metric-l">Price</div>
+          <div class="dc-metric-v">${fmt(d.price)}</div>
+        </div>
+        <div class="dc-metric">
+          <div class="dc-metric-l">Eff. Payment</div>
+          <div class="dc-metric-v" style="color:${(d.effective_payment||0)<=CAP?'var(--accent)':'var(--danger)'}">${fmt(d.effective_payment)}</div>
+        </div>
+        <div class="dc-metric">
+          <div class="dc-metric-l">Cap Rate</div>
+          <div class="dc-metric-v" style="color:${(d.cap_rate||0)>=5.5?'var(--accent)':'var(--warn)'}">${(d.cap_rate||0).toFixed(1)}%</div>
+        </div>
+        <div class="dc-metric">
+          <div class="dc-metric-l">CoC Return</div>
+          <div class="dc-metric-v" style="color:${(d.coc_return||0)>=6?'var(--accent)':'var(--warn)'}">${(d.coc_return||0).toFixed(1)}%</div>
+        </div>
+        <div class="dc-metric">
+          <div class="dc-metric-l">Equity</div>
+          <div class="dc-metric-v" style="color:${(d.equity||0)>=30000?'var(--accent)':'var(--muted2)'}">${fmt(d.equity)}</div>
+        </div>
+        <div class="dc-metric">
+          <div class="dc-metric-l">Cashflow</div>
+          <div class="dc-metric-v" style="color:${(d.monthly_cashflow||0)>=0?'var(--accent)':'var(--danger)'}">${fmt(d.monthly_cashflow)}/mo</div>
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+}
+
+function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ── LOAD DEAL INTO ANALYZER ──
+function loadDeal(jsonStr){
+  const d = JSON.parse(jsonStr);
+  document.getElementById('a-price').value = d.price||'';
+  document.getElementById('a-units').value = d.units||0;
+  document.getElementById('a-rent').value = d.rent_per_unit||1500;
+  document.getElementById('a-arv').value = d.arv||'';
+  document.getElementById('a-rehab').value = d.rehab||0;
+  document.getElementById('a-taxrate').value = d.tax_rate||1.25;
+  document.getElementById('a-ins').value = d.insurance||300;
+  document.getElementById('a-hoa').value = d.hoa||0;
+  document.getElementById('a-vacancy').value = d.vacancy_pct||5;
+  document.getElementById('a-maint').value = d.maint_pct||5;
+  document.getElementById('a-mgmt').value = d.mgmt_pct||0;
+  if(d.area) document.getElementById('a-area').value = d.area;
+  document.getElementById('a-tract').value = d.census_tract||'';
+  if(d.address) document.getElementById('i-address').value = d.address;
+  updateAnalyzer();
+  const btns = document.querySelectorAll('.tab-btn');
+  btns.forEach(b=>b.classList.remove('active'));
+  showTab('analyzer', btns[1]);
+  showToast('✓ Deal loaded into Analyzer');
+}
+
+// ── DELETE DEAL ──
+async function deleteDeal(id){
+  if(!confirm('Delete this deal?')) return;
+  try {
+    if(id.startsWith('local_')){
+      const local=JSON.parse(localStorage.getItem('naca_deals')||'[]');
+      localStorage.setItem('naca_deals',JSON.stringify(local.filter(d=>d.id!==id)));
+    } else if(sb){
+      const {error}=await sb.from('saved_deals').delete().eq('id',id);
+      if(error) throw error;
+    }
+    showToast('Deal deleted');
+  } catch(e){ showToast('Delete failed','error'); }
+  loadSavedDeals();
+}
+
+// ── RENAME DEAL ──
+async function renameDeal(input){
+  const id = input.dataset.id;
+  const name = input.value.trim();
+  if(!name){ input.value='Untitled'; return; }
+  try {
+    if(id.startsWith('local_')){
+      const local=JSON.parse(localStorage.getItem('naca_deals')||'[]');
+      const d=local.find(x=>x.id===id);
+      if(d){ d.deal_name=name; localStorage.setItem('naca_deals',JSON.stringify(local)); }
+    } else if(sb){
+      await sb.from('saved_deals').update({deal_name:name}).eq('id',id);
+    }
+    showToast('✓ Renamed');
+  } catch(e){ showToast('Rename failed','error'); }
+}
 </script>
 </body>
 </html>
