@@ -32,7 +32,9 @@ nav{display:flex;align-items:center;justify-content:space-between;padding:0 20px
 .score-area{display:flex;align-items:center;gap:12px;}
 .score-tag{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:right;}
 .score-verdict{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;text-align:right;margin-top:1px;}
-.score-num{font-family:var(--sans);font-size:26px;font-weight:800;color:var(--accent);min-width:44px;text-align:right;line-height:1;}
+.score-num{font-family:var(--sans);font-size:26px;font-weight:800;color:var(--accent);min-width:44px;text-align:right;line-height:1;transition:transform .1s;}
+@keyframes scoreFlash{0%{opacity:1}30%{opacity:.35}100%{opacity:1}}
+.score-flash{animation:scoreFlash .35s ease-out;}
 
 /* PAGES */
 .page{display:none;flex:1;overflow:hidden;}
@@ -645,6 +647,7 @@ function runCheck(){
 
 // ── ANALYZER ──
 let aChart=null;
+let _chartTimer=null;
 function scoreCalc(d){
   let s=0;
   if(d.eff<=CAP) s+=25; else if(d.eff<=CAP*1.05) s+=12; else if(d.eff<=CAP*1.15) s+=4;
@@ -657,20 +660,43 @@ function scoreCalc(d){
 const sVerdict=s=>s>=75?'STRONG BUY':s>=60?'SOLID DEAL':s>=45?'NEGOTIATE':'PASS';
 const sColor=s=>s>=75?'var(--accent)':s>=60?'#88ff88':s>=45?'var(--warn)':'var(--danger)';
 
+function _getAnalyzerInputs(){
+  return {
+    price: parseFloat(document.getElementById('a-price').value)||0,
+    units: parseInt(document.getElementById('a-units').value)||0,
+    rent:  parseFloat(document.getElementById('a-rent').value)||0,
+    arv:   parseFloat(document.getElementById('a-arv').value)||0,
+    rehab: parseFloat(document.getElementById('a-rehab').value)||0,
+    taxR:  (parseFloat(document.getElementById('a-taxrate').value)||1.25)/100,
+    ins:   parseFloat(document.getElementById('a-ins').value)||300,
+    hoa:   parseFloat(document.getElementById('a-hoa').value)||0,
+    vacP:  (parseFloat(document.getElementById('a-vacancy').value)||5)/100,
+    mntP:  (parseFloat(document.getElementById('a-maint').value)||5)/100,
+    mgP:   (parseFloat(document.getElementById('a-mgmt').value)||0)/100,
+    area:  document.getElementById('a-area').value,
+    tract: parseFloat(document.getElementById('a-tract').value)
+  };
+}
+
+function _rebuildApprChart(area, base){
+  try {
+    if(aChart){ aChart.destroy(); aChart=null; }
+    const ctx2=document.getElementById('apprChart').getContext('2d');
+    if(!ctx2) return;
+    const apR=APPR[area]||.055;
+    document.getElementById('area-rate-lbl').textContent=APPR_LBL[area]||'';
+    aChart=new Chart(ctx2,{type:'line',data:{
+      labels:[0,1,2,3,4,5].map(y=>y===0?'Today':'Yr '+y),
+      datasets:[{data:[0,1,2,3,4,5].map(y=>base*Math.pow(1+apR,y)),borderColor:'rgba(184,255,60,.8)',backgroundColor:'rgba(184,255,60,.06)',borderWidth:2,pointBackgroundColor:'rgba(184,255,60,1)',pointRadius:4,fill:true,tension:.3}]
+    },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+Math.round(c.raw).toLocaleString()}}},
+      scales:{x:{ticks:{color:'#555',font:{family:'IBM Plex Mono',size:9}},grid:{color:'rgba(255,255,255,.04)'}},
+              y:{ticks:{color:'#555',font:{family:'IBM Plex Mono',size:9},callback:v=>'$'+(v/1000).toFixed(0)+'K'},grid:{color:'rgba(255,255,255,.04)'}}}}
+    });
+  } catch(e){ console.warn('Chart error (non-fatal):',e); }
+}
+
 function updateAnalyzer(){
-  const price=parseFloat(document.getElementById('a-price').value)||0;
-  const units=parseInt(document.getElementById('a-units').value)||0;
-  const rent=parseFloat(document.getElementById('a-rent').value)||0;
-  const arv=parseFloat(document.getElementById('a-arv').value)||0;
-  const rehab=parseFloat(document.getElementById('a-rehab').value)||0;
-  const taxR=(parseFloat(document.getElementById('a-taxrate').value)||1.25)/100;
-  const ins=parseFloat(document.getElementById('a-ins').value)||300;
-  const hoa=parseFloat(document.getElementById('a-hoa').value)||0;
-  const vacP=(parseFloat(document.getElementById('a-vacancy').value)||5)/100;
-  const mntP=(parseFloat(document.getElementById('a-maint').value)||5)/100;
-  const mgP=(parseFloat(document.getElementById('a-mgmt').value)||0)/100;
-  const area=document.getElementById('a-area').value;
-  const tract=parseFloat(document.getElementById('a-tract').value);
+  const {price,units,rent,arv,rehab,taxR,ins,hoa,vacP,mntP,mgP,area,tract}=_getAnalyzerInputs();
 
   const p=pitiCalc(price,taxR,ins,hoa);
   const cr=cred(units,rent),eff=p.total-cr;
@@ -683,9 +709,12 @@ function updateAnalyzer(){
   const grm=gross>0?price/(gross*12):0;
   const coc=(MRF+rehab)>0?(cf*12/(MRF+rehab))*100:0;
 
+  // ── Score always updates immediately ──
   const score=scoreCalc({eff,cap:capR,coc,grm,eq});
-  document.getElementById('score-num').textContent=score;
-  document.getElementById('score-num').style.color=sColor(score);
+  const sn=document.getElementById('score-num');
+  sn.textContent=score;
+  sn.style.color=sColor(score);
+  sn.classList.remove('score-flash'); void sn.offsetWidth; sn.classList.add('score-flash');
   document.getElementById('score-verdict').textContent=sVerdict(score);
   document.getElementById('score-verdict').style.color=sColor(score);
 
@@ -737,18 +766,10 @@ function updateAnalyzer(){
   ];
   document.getElementById('flags').innerHTML=flags.map(f=>`<div class="flag ${f.ok==='pass'?'fg-pass':f.ok==='warn'?'fg-warn':'fg-fail'}"><span>${f.ok==='pass'?'✅':f.ok==='warn'?'⚠️':'❌'}</span><span>${f.t}</span></div>`).join('');
 
-  const apR=APPR[area]||.055;
-  document.getElementById('area-rate-lbl').textContent=APPR_LBL[area]||'';
+  // ── Chart debounced: rebuilds 400ms after typing stops ──
   const base=arv>0?arv:allIn;
-  if(aChart) aChart.destroy();
-  const ctx2=document.getElementById('apprChart').getContext('2d');
-  aChart=new Chart(ctx2,{type:'line',data:{
-    labels:[0,1,2,3,4,5].map(y=>y===0?'Today':'Yr '+y),
-    datasets:[{data:[0,1,2,3,4,5].map(y=>base*Math.pow(1+apR,y)),borderColor:'rgba(184,255,60,.8)',backgroundColor:'rgba(184,255,60,.06)',borderWidth:2,pointBackgroundColor:'rgba(184,255,60,1)',pointRadius:4,fill:true,tension:.3}]
-  },options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'$'+Math.round(c.raw).toLocaleString()}}},
-    scales:{x:{ticks:{color:'#555',font:{family:'IBM Plex Mono',size:9}},grid:{color:'rgba(255,255,255,.04)'}},
-            y:{ticks:{color:'#555',font:{family:'IBM Plex Mono',size:9},callback:v=>'$'+(v/1000).toFixed(0)+'K'},grid:{color:'rgba(255,255,255,.04)'}}}}
-  });
+  clearTimeout(_chartTimer);
+  _chartTimer=setTimeout(()=>_rebuildApprChart(area,base),400);
 }
 
 function calcPsf(inp){
