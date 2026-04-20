@@ -801,7 +801,30 @@ function buildBuydown(){
   }).join('');
 }
 
-window.addEventListener('load',()=>{ updateAnalyzer(); buildBuydown(); initSupabase(); });
+window.addEventListener('load',()=>{
+  // Attach analyzer input listeners via JS (belt-and-suspenders with inline oninput)
+  const aIds=['a-price','a-units','a-rent','a-arv','a-rehab','a-taxrate','a-ins','a-hoa','a-vacancy','a-maint','a-mgmt','a-tract','a-area'];
+  aIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){
+      el.addEventListener('input',updateAnalyzer);
+      el.addEventListener('change',updateAnalyzer);
+    }
+  });
+  // Also wire intake price/type to update score live
+  ['i-price','i-type'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('input',()=>{
+      // Sync intake price into analyzer so score reflects what you're typing
+      const p=parseFloat(document.getElementById('i-price').value)||0;
+      const t=document.getElementById('i-type').value;
+      if(p>0) document.getElementById('a-price').value=p;
+      if(t) document.getElementById('a-units').value={sfr:0,'sfr-adu':1,duplex:1,'sfr-adu-jadu':2,triplex:2,fourplex:3}[t]??document.getElementById('a-units').value;
+      updateAnalyzer();
+    });
+  });
+  updateAnalyzer(); buildBuydown(); initSupabase();
+});
 
 // ── SUPABASE SETUP ──
 const SB_URL = 'https://zpcwxndahyfxriperbnr.supabase.co';
